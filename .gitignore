@@ -1,5 +1,5 @@
 # Binaries
-payment-gateway
+/payment-gateway
 *.exe
 *.exe~
 *.dll
