@@ -3,12 +3,15 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"gateway/internal/api"
 	"gateway/internal/config"
 	"gateway/internal/crypto/btc"
 	"gateway/internal/crypto/ltc"
+	"gateway/internal/crypto/eth"
 	"gateway/internal/db"
+	"gateway/internal/monitor"
 )
 
 func main() {
@@ -20,14 +23,28 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	// 3. Initialize Crypto Clients & Monitors
+	// 3. Initialize Crypto Clients & Start Monitors
 	btcClient := btc.NewClient(cfg.BTCRPCURL, cfg.BTCRPCUser, cfg.BTCRPCPass)
-	btcMonitor := btc.NewMonitor(btcClient, db.DB, cfg.Testnet)
+
+	// Start Monitors with Staggering (10s gap to avoid rate limits/load spike)
+	log.Println("Starting BTC Monitor...")
+	btcMonitor := monitor.NewBTCMonitor(btcClient, db.DB, cfg.Testnet)
 	btcMonitor.Start()
 
+	time.Sleep(10 * time.Second)
+
 	ltcClient := ltc.NewClient(cfg.LTCRPCURL, cfg.LTCRPCUser, cfg.LTCRPCPass)
-	ltcMonitor := ltc.NewMonitor(ltcClient, db.DB, cfg.Testnet)
+	log.Println("Starting LTC Monitor...")
+	ltcMonitor := monitor.NewLTCMonitor(ltcClient, db.DB, cfg.Testnet)
 	ltcMonitor.Start()
+
+	if cfg.ETHRPCURL != "" {
+		time.Sleep(10 * time.Second)
+		log.Println("Starting ETH Monitor...")
+		ethClient := eth.NewClient(cfg.ETHRPCURL)
+		ethMonitor := monitor.NewETHMonitor(ethClient, db.DB)
+		ethMonitor.Start()
+	}
 
 	// 4. Setup Router
 	http.HandleFunc("/merchants", api.CreateMerchantHandler)

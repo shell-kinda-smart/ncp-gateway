@@ -115,6 +115,37 @@ func (c *Client) GetBlockRaw(hash string) (string, error) {
 	return hexData, err
 }
 
+type BlockJSON struct {
+	Hash   string       `json:"hash"`
+	Tx     []TxJSON     `json:"tx"`
+	Height int64        `json:"height"`
+}
+
+type TxJSON struct {
+	TxID string     `json:"txid"`
+	Vout []VoutJSON `json:"vout"`
+}
+
+type VoutJSON struct {
+	Value        float64          `json:"value"`
+	ScriptPubKey ScriptPubKeyJSON `json:"scriptPubKey"`
+}
+
+type ScriptPubKeyJSON struct {
+	Addresses []string `json:"addresses"`
+}
+
+// GetBlockVerbose returns the block with full transaction details (verbosity=2)
+func (c *Client) GetBlockVerbose(hash string) (*BlockJSON, error) {
+	res, err := c.Call("getblock", hash, 2)
+	if err != nil {
+		return nil, err
+	}
+	var block BlockJSON
+	err = json.Unmarshal(res, &block)
+	return &block, err
+}
+
 // SendRawTransaction broadcasts a hex-encoded transaction
 func (c *Client) SendRawTransaction(hexTx string) (string, error) {
 	res, err := c.Call("sendrawtransaction", hexTx)

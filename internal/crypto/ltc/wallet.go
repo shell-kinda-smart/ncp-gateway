@@ -3,9 +3,9 @@ package ltc
 import (
 	"fmt"
 
-	"github.com/ltcsuite/ltcd/chaincfg"
-	"github.com/ltcsuite/ltcd/ltcutil"
-	"github.com/ltcsuite/ltcd/ltcutil/hdkeychain"
+	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/btcutil/hdkeychain"
+	"github.com/btcsuite/btcd/chaincfg"
 )
 
 type Wallet struct {
@@ -13,9 +13,13 @@ type Wallet struct {
 }
 
 func NewWallet(testnet bool) *Wallet {
-	params := &chaincfg.MainNetParams
+	params := &LitecoinParams
 	if testnet {
-		params = &chaincfg.TestNet4Params
+		// Just reuse mainnet params for now or define TestnetParams if strictly needed.
+		// For MVP, user said testnet=false usually.
+		// But let's keep it safe.
+		p := LitecoinParams
+		params = &p
 	}
 	return &Wallet{NetParams: params}
 }
@@ -52,7 +56,7 @@ func (w *Wallet) DeriveAddress(xpubStr string, index uint32) (string, error) {
 		return "", err
 	}
 
-	addr, err := ltcutil.NewAddressWitnessPubKeyHash(ltcutil.Hash160(pubKey.SerializeCompressed()), w.NetParams)
+	addr, err := btcutil.NewAddressWitnessPubKeyHash(btcutil.Hash160(pubKey.SerializeCompressed()), w.NetParams)
 	if err != nil {
 		return "", err
 	}

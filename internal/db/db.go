@@ -50,6 +50,8 @@ func runMigrations() error {
 		api_key TEXT UNIQUE NOT NULL,
 		btc_xpub TEXT,
 		ltc_xpub TEXT,
+		eth_xpub TEXT,
+		settings JSONB DEFAULT '{}',
 		current_index INT DEFAULT 0,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
@@ -65,7 +67,7 @@ func runMigrations() error {
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
 
-	CREATE TABLE transactions (
+	CREATE TABLE IF NOT EXISTS transactions (
 		id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 		tx_id TEXT NOT NULL,
 		coin TEXT NOT NULL,
@@ -78,8 +80,13 @@ func runMigrations() error {
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
 	
-	CREATE INDEX idx_deposit_address ON deposit_addresses(address);
-	CREATE INDEX idx_tx_to_address ON transactions(to_address);
+	CREATE TABLE IF NOT EXISTS app_state (
+		key TEXT PRIMARY KEY,
+		value TEXT
+	);
+	
+	CREATE INDEX IF NOT EXISTS idx_deposit_address ON deposit_addresses(address);
+	CREATE INDEX IF NOT EXISTS idx_tx_to_address ON transactions(to_address);
 	`
 
 	_, err := DB.Exec(schema)

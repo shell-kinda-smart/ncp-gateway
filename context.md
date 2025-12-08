@@ -5,8 +5,8 @@
 **Architecture**: HD Wallet (BIP32) based. The server tracks funds but does not hold keys.
 
 ## 2. Core Features
-1.  **Multi-Coin**: BTC (SegWit) and LTC (SegWit).
-2.  **Non-Custodial**: Merchant provides `xpub`, server derives `xpub/0/i`.
+1.  **Multi-Coin**: BTC, LTC, ETH.
+2.  **Non-Custodial**: Merchant provides `xpub`, server derives `xpub/0/i` (BTC/LTC) or `xpub` derived addresses (ETH).
 3.  **Zero Fees**: Funds go directly to merchant.
 4.  **Monitoring**: Monitors blockchain for deposits to derived addresses.
 
@@ -20,9 +20,11 @@
 │   ├── api/             # Handlers (Merchant, Wallets)
 │   ├── config/          # Env (DB, RPC, Testnet)
 │   ├── crypto/          # Core Logic
-│   │   ├── btc/         # Wallet (Derivation), Client, Monitor
-│   │   └── ltc/         # Wallet (Derivation), Client, Monitor
-│   └── db/              # Postgres (Merchants, Addresses, Tx)
+│   │   ├── btc/         # Wallet (Derivation), Client
+│   │   ├── ltc/         # Wallet (Derivation), Client (Re-uses btcsuite)
+│   │   └── eth/         # Wallet, Client
+│   ├── db/              # Postgres (Merchants, Addresses, Tx)
+│   └── monitor/         # Monitors (BTC, LTC, ETH)
 └── go.mod
 ```
 

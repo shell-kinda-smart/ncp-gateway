@@ -20,8 +20,12 @@ Registers a new merchant with their Extended Public Keys (xpub).
 ```json
 {
   "name": "My Tech Store",
-  "btc_xpub": "xpub6C...", // Your Bitcoin Master Public Key`
-  "ltc_xpub": "xpub6B..."  // Your Litecoin Master Public Key
+  "btc_xpub": "xpub6C...", // Your Bitcoin Master Public Key
+  "ltc_xpub": "xpub6B...",  // Your Litecoin Master Public Key
+  "eth_xpub": "xpub...",   // Your Ethereum Master Public Key
+  "settings": {
+    "webhook_url": "https://example.com/webhook"
+  }
 }
 ```
 

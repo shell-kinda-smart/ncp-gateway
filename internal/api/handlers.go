@@ -6,6 +6,7 @@ import (
 
 	"gateway/internal/config"
 	"gateway/internal/crypto/btc"
+	"gateway/internal/crypto/eth"
 	"gateway/internal/crypto/ltc"
 	"gateway/internal/db"
 )
@@ -15,6 +16,17 @@ type CreateMerchantRequest struct {
 	Name    string `json:"name"`
 	BTCXPub string `json:"btc_xpub"`
 	LTCXPub string `json:"ltc_xpub"`
+	ETHXPub string `json:"eth_xpub"`
+	Settings json.RawMessage `json:"settings"`
+}
+
+type MerchantResponse struct {
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	APIKey  string `json:"api_key"`
+	BTCXPub string `json:"btc_xpub"`
+	LTCXPub string `json:"ltc_xpub"`
+	ETHXPub string `json:"eth_xpub"`
 }
 
 func CreateMerchantHandler(w http.ResponseWriter, r *http.Request) {
@@ -30,19 +42,28 @@ func CreateMerchantHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Basic Validation
-	if req.BTCXPub == "" && req.LTCXPub == "" {
+	if req.BTCXPub == "" && req.LTCXPub == "" && req.ETHXPub == "" {
 		http.Error(w, "At least one XPUB is required", http.StatusBadRequest)
 		return
 	}
 
-	m, err := db.CreateMerchant(req.Name, req.BTCXPub, req.LTCXPub)
+	m, err := db.CreateMerchant(db.DB, req.Name, req.BTCXPub, req.LTCXPub, req.ETHXPub, req.Settings)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	resp := MerchantResponse{
+		ID:      m.ID,
+		Name:    m.Name,
+		APIKey:  m.APIKey,
+		BTCXPub: m.BTCXPub,
+		LTCXPub: m.LTCXPub,
+		ETHXPub: m.ETHXPub,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(m)
+	json.NewEncoder(w).Encode(resp)
 }
 
 // GenerateWalletsRequest
@@ -64,7 +85,7 @@ func GenerateWalletsHandler(cfg *config.Config) http.HandlerFunc {
 		}
 
 		apiKey := r.Header.Get("X-API-Key")
-		merchant, err := db.GetMerchantByAPIKey(apiKey)
+		merchant, err := db.GetMerchantByAPIKey(db.DB, apiKey)
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
@@ -108,6 +129,19 @@ func GenerateWalletsHandler(cfg *config.Config) http.HandlerFunc {
 				return
 			}
 			da, err := db.SaveDepositAddress(merchant.ID, "LTC", addr, req.UserID, index)
+			if err == nil {
+				wallets = append(wallets, da)
+			}
+		}
+
+		// 4. Derive ETH
+		if merchant.ETHXPub != "" {
+			addr, err := eth.DeriveAddress(merchant.ETHXPub, uint32(index))
+			if err != nil {
+				http.Error(w, "ETH Derivation Error: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			da, err := db.SaveDepositAddress(merchant.ID, "ETH", addr, req.UserID, index)
 			if err == nil {
 				wallets = append(wallets, da)
 			}
