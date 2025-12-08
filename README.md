@@ -90,6 +90,11 @@ LTC_RPC_USER=rpcuser
 LTC_RPC_PASS=rpcpassword
 ```
 
+### 💡 Best Free RPC Providers
+Don't want to run your own node? Use the **Free Tier** of these providers:
+1.  **[GetBlock.io](https://getblock.io/)** (40k req/day - Supports BTC & LTC).
+2.  **[NOWNodes.io](https://nownodes.io/)** (100k req/day - Supports BTC & LTC).
+
 ---
 
 ## 🔌 Usage API
