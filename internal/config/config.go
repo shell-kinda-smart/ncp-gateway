@@ -19,6 +19,7 @@ type Config struct {
 
 	ETHRPCURL string
 	Testnet       bool
+	MasterKey     string // 32-byte hex or string key for AES-GCM
 }
 
 func LoadConfig() *Config {
@@ -52,8 +53,10 @@ func LoadConfig() *Config {
 		LTCRPCUser:    getEnv("LTC_RPC_USER", ""),
 		LTCRPCPass:    getEnv("LTC_RPC_PASS", ""),
 
+
 		ETHRPCURL:     getEnv("ETH_RPC_URL", ""),
 		Testnet:       os.Getenv("TESTNET") == "true",
+		MasterKey:     os.Getenv("MASTER_KEY"), // Added MasterKey
 	}
 }
 

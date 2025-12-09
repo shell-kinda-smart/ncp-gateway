@@ -1,0 +1,48 @@
+2025/12/09 13:45:25 Loaded .env file
+2025/12/09 13:45:25 Connected to PostgreSQL database!
+2025/12/09 13:45:25 Database schema updated for HD Wallets (Tables Reset).
+2025/12/09 13:45:25 Starting Payment Gateway on port 8080...
+2025/12/09 13:45:25 Starting BTC Monitor...
+2025/12/09 13:45:35 Starting LTC Monitor...
+2025/12/09 13:45:45 Starting ETH Monitor...
+2025/12/09 13:45:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 13:46:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 13:47:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 13:48:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 13:49:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 13:50:25 Processing BTC Block 927134...
+2025/12/09 13:50:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 13:51:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 13:52:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 13:53:35 Processing LTC Block 3017901...
+2025/12/09 13:53:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 13:54:35 Processing LTC Block 3017902...
+2025/12/09 13:54:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 13:55:35 Processing LTC Block 3017903...
+2025/12/09 13:55:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 13:56:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 13:57:35 Processing LTC Block 3017904...
+2025/12/09 13:57:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 13:58:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 13:59:35 Processing LTC Block 3017905...
+2025/12/09 13:59:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 14:00:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 14:01:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 14:02:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 14:03:35 Processing LTC Block 3017906...
+2025/12/09 14:03:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 14:04:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 14:05:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 14:06:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 14:07:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 14:08:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 14:09:35 Processing LTC Block 3017907...
+2025/12/09 14:09:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 14:10:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 14:11:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 14:12:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 14:13:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 14:14:46 Error processing ETH blocks: RPC Error: 402 Out of CU
+2025/12/09 14:15:25 Processing BTC Block 927135...
+2025/12/09 14:15:35 Processing LTC Block 3017908...
+2025/12/09 14:15:46 Error processing ETH blocks: RPC Error: 402 Out of CU

@@ -9,8 +9,8 @@ Base URL: `http://localhost:8080`
 
 ## 2. Endpoints
 
-### 2.1 Create Merchant
-Registers a new merchant with their Extended Public Keys (xpub).
+### 2.1 Create Merchant (Managed)
+Registers a new merchant and auto-generates a secure wallet (Native SegWit compliant).
 
 - **URL**: `/merchants`
 - **Method**: `POST`
@@ -20,12 +20,10 @@ Registers a new merchant with their Extended Public Keys (xpub).
 ```json
 {
   "name": "My Tech Store",
-  "btc_xpub": "xpub6C...", // Your Bitcoin Master Public Key
-  "ltc_xpub": "xpub6B...",  // Your Litecoin Master Public Key
-  "eth_xpub": "xpub...",   // Your Ethereum Master Public Key
-  "settings": {
-    "webhook_url": "https://example.com/webhook"
-  }
+  "payout_address_btc": "bc1q...",
+  "payout_address_ltc": "ltc1...",
+  "payout_address_eth": "0x...",
+  "webhook_url": "https://example.com/webhook"
 }
 ```
 
@@ -35,9 +33,8 @@ Registers a new merchant with their Extended Public Keys (xpub).
   "id": "550e8400-...",
   "name": "My Tech Store",
   "api_key": "3f889988... (Keep this safe!)",
-  "btc_xpub": "xpub6C...",
-  "ltc_xpub": "xpub6B...",
-  "current_index": 0,
+  "mnemonic": "abandon ability able about above absent absorb abstract absurd abuse access accident",
+  "warning": "WRITE THIS DOWN. WE DO NOT DISPLAY IT AGAIN. YOU OWN THIS WALLET.",
   "created_at": "2023-10-27T10:00:00Z"
 }
 ```

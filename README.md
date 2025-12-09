@@ -30,19 +30,14 @@ Built for privacy, security, and zero fees using **HD Wallets (BIP32)**.
 *   **Professional Webhooks**: Clean, rich JSON payloads with complete metadata.
 *   **Scalable**: Built on Go and PostgreSQL.
 
-## 🏗 Architecture (Hybrid)
+## 🏗 Architecture (Pure Managed)
 
-The gateway supports two modes:
+The gateway operates in **Pure Managed Mode**:
 
-### Mode A: Non-Custodial (BYO Keys)
-*   **You** provide `xpub` / `zpub`.
-*   **Gateway** derives unique addresses.
-*   **Funds** go directly to your Cold Wallet.
-
-### Mode B: Managed (Hot Wallet)
-*   **Gateway** generates a 12-word Seed.
-*   **Gateway** encrypts keys (AES-GCM).
-*   **Funds** are auto-forwarded to your Payout Address (Coming Soon).
+*   **Gateway** generates a 12-word Seed (BIP39).
+*   **Gateway** holds encryption keys (AES-GCM).
+*   **Gateway** tracks your balance (Watch-Only) on your node.
+*   **You** trigger Manual Withdrawals to move funds to Cold Storage.
 
 ---
 
@@ -120,15 +115,17 @@ Don't want to run your own node? Use the **Free Tier** of these providers:
 
 ## 🔌 Usage API
 
-### 1. Register Merchant
+### 1. Register Merchant (Managed)
 **POST** `/merchants`
 ```json
 {
   "name": "My Store",
-  "btc_xpub": "xpub...",
-  "ltc_xpub": "xpub..."
+  "payout_address_btc": "bc1q...",
+  "payout_address_ltc": "ltc1...",
+  "payout_address_eth": "0x..."
 }
 ```
+**Response** will include your **API Key** and **Secret Mnemonic**. Save them!
 
 ### 2. Generate Payment Wallets
 **POST** `/wallets`  

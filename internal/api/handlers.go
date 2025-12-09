@@ -18,9 +18,10 @@ import (
 // CreateMerchantRequest (Managed)
 type CreateMerchantRequest struct {
 	Name             string `json:"name"`
-	PayoutAddressBTC string `json:"payout_btc"`
-	PayoutAddressLTC string `json:"payout_ltc"`
-	PayoutAddressETH string `json:"payout_eth"`
+	PayoutAddressBTC string `json:"payout_address_btc"`
+	PayoutAddressLTC string `json:"payout_address_ltc"`
+	PayoutAddressETH string `json:"payout_address_eth"`
+	WebhookURL       string `json:"webhook_url"` // Added Webhook Support
 	Passphrase       string `json:"passphrase"` // Optional salt
 }
 
@@ -57,8 +58,15 @@ func CreateMerchantHandler(cfg *config.Config) http.HandlerFunc {
 			return
 		}
 		
+
 		// 2. Encrypt Mnemonic
-		masterKey := "super_secret_master_key_32bytes!!!!" // In prod -> os.Getenv("MASTER_KEY")
+		masterKey := cfg.MasterKey
+		if masterKey == "" {
+             log.Println("CRITICAL: MASTER_KEY not set")
+             http.Error(w, "Configuration Error: Secure Storage Unavailable", http.StatusInternalServerError)
+             return
+        }
+
 		encryptedMnemonic, err := security.Encrypt(keys.Mnemonic, masterKey)
 		if err != nil {
 			http.Error(w, "Encryption Failed", http.StatusInternalServerError)
@@ -67,8 +75,9 @@ func CreateMerchantHandler(cfg *config.Config) http.HandlerFunc {
 		
 		// 3. Save to DB (Explicitly set format to native/best)
 		settings := map[string]string{
-			"btc_format": "native",
-			"ltc_format": "native",
+			"btc_format":  "native",
+			"ltc_format":  "native",
+			"webhook_url": req.WebhookURL,
 		}
 		settingsBytes, _ := json.Marshal(settings)
 		
@@ -329,12 +338,15 @@ func WithdrawHandler(cfg *config.Config) http.HandlerFunc {
 		
 		log.Printf("Withdraw Request: Merchant=%s Coin=%s Amount=%s Dest=%s", merchant.Name, req.Coin, req.Amount, req.Address)
 
+
 		// 2. Decrypt Mnemonic (HOT WALLET ACTIVATE)
 		// We need the master key to decrypt the user's seed.
-		masterKey := "super_secret_master_key_32bytes!!!!" 
+		masterKey := cfg.MasterKey 
 		mnemonic, err := security.Decrypt(merchant.EncryptedMnemonic, masterKey)
 		if err != nil {
-			http.Error(w, "Security Error: Failed to unlock wallet", http.StatusInternalServerError)
+			// Do not return exact error for security
+			log.Printf("Decryption Failed for Merchant %s: %v", merchant.ID, err)
+			http.Error(w, "Security Error: Failed to unlock wallet", http.StatusForbidden)
 			return
 		}
 		
