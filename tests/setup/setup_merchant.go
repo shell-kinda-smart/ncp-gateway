@@ -3,22 +3,30 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	
-	// Import models to use GenerateAPIKey if exported or just raw SQL
-	// "gateway/internal/db" 
 )
 
-// We define a simplified process here to avoid importing the whole app if db package is complex
-// But we should use the internal db package if possible.
-// Given imports, let's just use raw SQL for simplicity and robustness in a script.
-
 func main() {
+	// Parse Flags
+	// Defaults empty to make them optional
+	userBTC := flag.String("btc", "", "User BTC Address")
+	userLTC := flag.String("ltc", "", "User LTC Address")
+	userETH := flag.String("eth", "", "User ETH Address")
+	
+	// XPUB Flags (Defaults to Test Vector, but LTC updated to User Request)
+	xpubBTC := flag.String("btc-xpub", "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8", "BTC XPUB")
+	xpubLTC := flag.String("ltc-xpub", "xpub6DDn5pSVZKEuWmeJ8p84mpgVubu5bcu76EPp5Ue4irjBf7TDMr8zTkxtaFKL87f4sjK1MPArHgvRVeiwpXnX8GMtjthNRtMsaRXchTGZgc7", "LTC XPUB")
+	xpubETH := flag.String("eth-xpub", "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8", "ETH XPUB")
+
+	webhook := flag.String("webhook", "https://discord.com/api/webhooks/...", "Webhook URL")
+	flag.Parse()
+
 	_ = godotenv.Load()
 	
 	dbURL := os.Getenv("DATABASE_URL")
@@ -112,22 +120,37 @@ func main() {
 
 	// 1. Create Merchant
 	merchantName := "Test Merchant (Eth Boi)"
-	webhookURL := "https://discord.com/api/webhooks/1416434601303343267/sQ5v-PjR34udmz6JNu9fF9idX1h3QHKwnmqWpDcTBOdZs8T40CvpPSMOO4n__JEhWybS"
+	webhookURL := *webhook
 	
-	// User provided Addresses used as XPUBs?? NO.
-	// We MUST use real XPUBs for derivation to work.
-	// I will use standard test vector xpubs.
-	// BTC: xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8
-	// LTC: Ltub288szl... (using BTC xpub format usually works for LTC logic if using btcsuite, but technically version bytes differ. Let's use a standard BTC one for LTC too since our logic mostly cares about the key data, or use a known LTC xpub).
-	// ETH: xpub... (ETH doesn't strictly use xpub in standard clients but our code expects it).
-	// I will use the SAME xpub for all 3 for simplicity of testing derivation, or distinct ones.
-	
-	btcXPub := "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8"
-	ltcXPub := "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8" 
-	ethXPub := "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8"
+	// Use provided XPUBs
+	btcXPub := *xpubBTC
+	ltcXPub := *xpubLTC 
+	ethXPub := *xpubETH
 
-	settings := map[string]string{"webhook_url": webhookURL}
-	settingsBytes, _ := json.Marshal(settings)
+	// Auto-Detect Wallet Format Preferences
+	settingsMap := map[string]string{"webhook_url": webhookURL}
+	
+	// Check LTC Format
+	if *userLTC != "" {
+		if (*userLTC)[0] == 'L' || (*userLTC)[0] == 'M' {
+			fmt.Println("ℹ️  Detected Legacy LTC Address (L/M). Configuring Generator to Legacy Mode.")
+			settingsMap["ltc_format"] = "legacy"
+		} else if len(*userLTC) > 4 && (*userLTC)[:4] == "ltc1" {
+			fmt.Println("ℹ️  Detected Native LTC Address (ltc1). Configuring Generator to Native Mode.")
+			settingsMap["ltc_format"] = "native"
+		}
+	}
+
+	// Check BTC Format
+	if *userBTC != "" {
+		if (*userBTC)[0] == '1' || (*userBTC)[0] == '3' {
+			settingsMap["btc_format"] = "legacy"
+		} else if len(*userBTC) > 3 && (*userBTC)[:3] == "bc1" {
+			settingsMap["btc_format"] = "native"
+		}
+	}
+
+	settingsBytes, _ := json.Marshal(settingsMap)
 
 	// Clean up previous test merchant if exists
 	// _, _ = db.Exec("DELETE FROM merchants WHERE name = $1", name)
@@ -140,14 +163,15 @@ func main() {
 	apiKey = "test_api_key_123456789" // Fixed for easy testing
 	
 	err = db.QueryRow(`
-		INSERT INTO merchants (name, api_key, btc_xpub, ltc_xpub, eth_xpub, settings)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO merchants (name, api_key, btc_xpub, ltc_xpub, eth_xpub, settings, current_index)
+		VALUES ($1, $2, $3, $4, $5, $6, 5)
 		ON CONFLICT (api_key) DO UPDATE SET 
 			name = EXCLUDED.name,
 			btc_xpub = EXCLUDED.btc_xpub,
 			ltc_xpub = EXCLUDED.ltc_xpub,
 			eth_xpub = EXCLUDED.eth_xpub,
-			settings = EXCLUDED.settings
+			settings = EXCLUDED.settings,
+			current_index = 5
 		RETURNING id
 	`, merchantName, apiKey, btcXPub, ltcXPub, ethXPub, settingsBytes).Scan(&merchantID)
 
@@ -157,23 +181,15 @@ func main() {
 
 	fmt.Printf("✅ Merchant Created/Updated!\nID: %s\nAPI Key: %s\n", merchantID, apiKey)
 
-	// 2. Insert the User's "Base Addresses" as a reference? 
-	// The user asked to "add public adress is going to according to base adress". 
-	// Maybe they want these specifically tracked? 
-	// In our HD system, we track *derived* addresses.
-	// I will insert these specific addresses into `deposit_addresses` so the monitor watches them!
-	// This is a "hack" to support their static addresses in our HD system.
-	// We will give them index -1 or something special.
+	// 2. Insert the User's "Base Addresses" IF provided
+	// This allows testing monitoring on an existing wallet without generating new ones.
+	// If empty, we skip.
 	
-	userBTC := "bc1q2ykugly7f0x6fxdu9pegckzhzgk3lpu3u6ad0c"
-	userLTC := "LapN9jvkQMXmmYoj5XCBV7MRWuDrnWXb2V"
-	userETH := "0x1189f4AdB7D2A79E5595CD5CfE0fa22DF6caa50D"
+	if *userBTC != "" { insertAddr(db, merchantID, "BTC", *userBTC) }
+	if *userLTC != "" { insertAddr(db, merchantID, "LTC", *userLTC) }
+	if *userETH != "" { insertAddr(db, merchantID, "ETH", *userETH) }
 
-	insertAddr(db, merchantID, "BTC", userBTC)
-	insertAddr(db, merchantID, "LTC", userLTC)
-	insertAddr(db, merchantID, "ETH", userETH)
-
-	fmt.Println("✅ Static Addresses injected for monitoring!")
+	fmt.Println("✅ Merchant Setup Complete!")
 }
 
 func insertAddr(db *sql.DB, mID, coin, addr string) {

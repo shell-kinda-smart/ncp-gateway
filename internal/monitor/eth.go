@@ -8,7 +8,10 @@ import (
 	"time"
 	"encoding/json"
 
+	"math/big"
+
 	"gateway/internal/crypto/eth"
+	"gateway/internal/price"
 	"gateway/internal/worker"
 )
 
@@ -147,11 +150,37 @@ func (m *ETHMonitor) recordTransaction(txID, toAddress string, amount string) {
 		}
 	}
 
+	// Calculate Amount (Wei -> ETH roughly for price)
+	// 'amount' is passed as string (Wei)
+	valRat := new(big.Float).SetInt(eth.HexToBigInt(amount)) // Logic fix: Helper expects hex string usually? Or Dec?
+	// Note: eth.HexToBigInt expects "0x..." usually. The caller passed valBig.String() which is Decimal.
+	// We need to parse Decimal String "1234..." to BigInt.
+	
+	valBig := new(big.Int)
+	valBig.SetString(amount, 10) // Parse decimal
+	
+	valRat.SetInt(valBig)
+	ethVal := new(big.Float).Quo(valRat, big.NewFloat(1e18))
+	fBalance, _ := ethVal.Float64()
+
+	// Price
+	ps := price.NewPriceService()
+	usdPrice, _ := ps.GetUSDPrice("ETH")
+	usdAmount := fBalance * usdPrice
+	
+	ts := time.Now().Format(time.RFC3339)
+
 	worker.SendWebhook(url, worker.WebhookPayload{
+		Event:     "deposit_detected",
 		TxID:      txID,
 		Coin:      "ETH",
-		Amount:    amount + " wei",
-		ToAddress: toAddress,
+		Address:   toAddress,
+		UserID:    "", // TODO
+		Amount:    fBalance,
+		AmountStr: fmt.Sprintf("%.6f ETH", fBalance),
+		USDPrice:  usdPrice,
+		USDAmount: usdAmount,
 		Status:    "detected",
+		Timestamp: ts,
 	})
 }

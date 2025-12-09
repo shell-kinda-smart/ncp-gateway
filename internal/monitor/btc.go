@@ -15,6 +15,7 @@ import (
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"gateway/internal/crypto/btc"
+	"gateway/internal/price"
 	"gateway/internal/worker"
 )
 
@@ -198,11 +199,27 @@ func (m *BTCMonitor) recordTransaction(txID, toAddress string, amount int64) {
 	}
 
 	// Trigger sending
+	// Calculate BTC amount (Sats -> BTC)
+	btcAmount := float64(amount) / 100000000.0
+
+	// Fetch USD Price
+	ps := price.NewPriceService()
+	usdPrice, _ := ps.GetUSDPrice("BTC")
+	usdAmount := btcAmount * usdPrice
+	
+	ts := time.Now().Format(time.RFC3339)
+
 	worker.SendWebhook(url, worker.WebhookPayload{
+		Event:     "deposit_detected",
 		TxID:      txID,
 		Coin:      "BTC",
-		Amount:    fmt.Sprintf("%d sats", amount), // Formatting sats
-		ToAddress: toAddress,
+		Address:   toAddress,
+		UserID:    "", // TODO: Fetch UserID
+		Amount:    btcAmount,
+		AmountStr: fmt.Sprintf("%.8f BTC", btcAmount),
+		USDPrice:  usdPrice,
+		USDAmount: usdAmount,
 		Status:    "detected",
+		Timestamp: ts,
 	})
 }

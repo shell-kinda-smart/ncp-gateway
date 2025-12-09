@@ -51,6 +51,15 @@ func runMigrations() error {
 		btc_xpub TEXT,
 		ltc_xpub TEXT,
 		eth_xpub TEXT,
+		
+		-- Hybrid / Hot Wallet Fields
+		wallet_type TEXT DEFAULT 'non_custodial', -- 'non_custodial' or 'custodial'
+		encrypted_mnemonic TEXT,
+		encryption_salt TEXT,
+		payout_address_btc TEXT,
+		payout_address_ltc TEXT,
+		payout_address_eth TEXT,
+
 		settings JSONB DEFAULT '{}',
 		current_index INT DEFAULT 0,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -64,6 +73,7 @@ func runMigrations() error {
 		derivation_index INT NOT NULL,
 		user_id TEXT,
 		status TEXT DEFAULT 'active',
+		address_type TEXT,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
 

@@ -24,18 +24,25 @@ Built for privacy, security, and zero fees using **HD Wallets (BIP32)**.
 
 *   **Non-Custodial**: You hold the keys. Funds settle directly to your hardware/software wallet.
 *   **Zero Fees**: No sweeping transactions. No miner fees paid by the gateway.
-*   **SegWit Support**: Generates efficient Native SegWit (`bc1q...`, `ltc1...`) addresses.
+*   **SegWit & Legacy**: Smart auto-detection (`bc1q...` vs `1...`) based on your wallet preference.
 *   **Privacy Focused**: Server only knows the `xpub`; it cannot spend funds.
+*   **Real-Time Prices**: Webhooks include USD conversion rates (via CoinGecko).
+*   **Professional Webhooks**: Clean, rich JSON payloads with complete metadata.
 *   **Scalable**: Built on Go and PostgreSQL.
 
-## 🏗 Architecture
+## 🏗 Architecture (Hybrid)
 
-The system uses **Hierarchical Deterministic (HD) Keys**.
-1.  **Merchant** provides an Extended Public Key (`xpub`).
-2.  **Gateway** derives a unique child address (`m/0/i`) for each customer.
-3.  **Customer** pays the address.
-4.  **Gateway** detects the transaction via Blockchain RPC and notifies the merchant.
-5.  **Merchant** sees funds immediately in their own wallet.
+The gateway supports two modes:
+
+### Mode A: Non-Custodial (BYO Keys)
+*   **You** provide `xpub` / `zpub`.
+*   **Gateway** derives unique addresses.
+*   **Funds** go directly to your Cold Wallet.
+
+### Mode B: Managed (Hot Wallet)
+*   **Gateway** generates a 12-word Seed.
+*   **Gateway** encrypts keys (AES-GCM).
+*   **Funds** are auto-forwarded to your Payout Address (Coming Soon).
 
 ---
 
@@ -45,8 +52,22 @@ The system uses **Hierarchical Deterministic (HD) Keys**.
 *   **PostgreSQL**: Database for tracking addresses and transactions.
 *   **Bitcoin Core**: Node with RPC enabled (`server=1`, `txindex=1` recommended).
 *   **Litecoin Core**: Node with RPC enabled.
+*   **Ethereum**: Geth or Infura/Alchemy RPC URL.
 
-## 📦 Installation
+## �️ Troubleshooting & Manual Run
+
+If you see `go: command not found`, you need to add Go to your path:
+```bash
+export PATH=$PATH:/root/gateway/.go_dist/bin
+```
+
+Then you can build and run manually:
+```bash
+go build -o payment-gateway ./cmd/payment-gateway
+./payment-gateway
+```
+
+## �📦 Installation
 
 1.  **Clone the repository** (or use the provided source):
     ```bash

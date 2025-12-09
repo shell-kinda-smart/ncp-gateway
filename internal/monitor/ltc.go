@@ -9,6 +9,7 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"gateway/internal/crypto/ltc"
+	"gateway/internal/price"
 	"gateway/internal/worker"
 )
 
@@ -154,11 +155,28 @@ func (m *LTCMonitor) recordTransaction(txID, toAddress string, amount int64) {
 		}
 	}
 
+	// Parse Lits to LTC string
+	ltcAmount := float64(amount) / 100000000.0
+	
+	// Fetch Price (Best Effort)
+	ps := price.NewPriceService()
+	usdPrice, _ := ps.GetUSDPrice("LTC")
+	usdAmount := ltcAmount * usdPrice
+	
+	// Prepare Timestamp
+	ts := time.Now().Format(time.RFC3339)
+
 	worker.SendWebhook(url, worker.WebhookPayload{
+		Event:     "deposit_detected",
 		TxID:      txID,
 		Coin:      "LTC",
-		Amount:    fmt.Sprintf("%d lits", amount),
-		ToAddress: toAddress,
+		Address:   toAddress,
+		UserID:    "", // TODO: Fetch from DB if needed, but Monitor struct doesn't have easy user lookup here without join
+		Amount:    ltcAmount,
+		AmountStr: fmt.Sprintf("%.8f LTC", ltcAmount),
+		USDPrice:  usdPrice,
+		USDAmount: usdAmount,
 		Status:    "detected",
+		Timestamp: ts,
 	})
 }

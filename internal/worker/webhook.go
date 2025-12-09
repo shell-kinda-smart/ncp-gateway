@@ -7,15 +7,20 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"time"
 )
 
 type WebhookPayload struct {
-	TxID      string `json:"tx_id"`
-	Coin      string `json:"coin"`
-	Amount    string `json:"amount"`
-	ToAddress string `json:"to_address"`
-	Status    string `json:"status"`
+	Event     string  `json:"event"`      // e.g. "deposit_detected"
+	TxID      string  `json:"tx_id"`
+	Coin      string  `json:"coin"`
+	Address   string  `json:"address"`
+	UserID    string  `json:"user_id,omitempty"`    // "from whom received" context
+	Amount    float64 `json:"amount"`               // Numeric for machine parsing
+	AmountStr string  `json:"amount_formatted"`     // Human readable "0.0019 LTC"
+	USDAmount float64 `json:"usd_amount,omitempty"` // Real-time USD value
+	USDPrice  float64 `json:"usd_price,omitempty"`  // Price at time of tx
+	Status    string  `json:"status"`
+	Timestamp string  `json:"timestamp"`
 }
 
 func SendWebhook(url string, payload WebhookPayload) {
@@ -24,34 +29,24 @@ func SendWebhook(url string, payload WebhookPayload) {
 	}
 
 	go func() {
-		// Use a retry mechanism or queue in production. For now, direct send.
-		var body []byte
-		var err error
+		// Serialize Payload to JSON first
+		jsonBytes, err := json.MarshalIndent(payload, "", "  ")
+		if err != nil {
+			log.Printf("Failed to marshal webhook payload: %v", err)
+			return
+		}
 
+		var body []byte
 		if strings.Contains(url, "discord.com/api/webhooks") {
-			// Format for Discord
-			discordBody := map[string]interface{}{
-				"username": "Crypto Gateway",
-				"embeds": []map[string]interface{}{
-					{
-						"title":       "💰 New Deposit Detected!",
-						"color":       5763719, // Green
-						"description": fmt.Sprintf("A new **%s** deposit has been detected.", payload.Coin),
-						"fields": []map[string]interface{}{
-							{"name": "Amount", "value": payload.Amount, "inline": true},
-							{"name": "Coin", "value": payload.Coin, "inline": true},
-							{"name": "Address", "value": payload.ToAddress},
-							{"name": "Transaction ID", "value": payload.TxID},
-							{"name": "Status", "value": payload.Status},
-						},
-						"timestamp": time.Now().Format(time.RFC3339),
-					},
-				},
+			// User requested "JSON not embed". 
+			// We wraps the JSON string in a Discord 'content' field with code blocks.
+			discordBody := map[string]string{
+				"content": fmt.Sprintf("```json\n%s\n```", string(jsonBytes)),
 			}
-			body, err = json.Marshal(discordBody)
+			body, _ = json.Marshal(discordBody)
 		} else {
-			// Standard JSON
-			body, err = json.Marshal(payload)
+			// Standard JSON for everything else
+			body = jsonBytes
 		}
 
 		if err != nil {
